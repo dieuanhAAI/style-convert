@@ -1,0 +1,87 @@
+---
+description: Pre-push checklist — run tests and pre-commit hooks before pushing any branch
+alwaysApply: false
+---
+
+# Test Before Push
+
+## Pre-Push Checklist
+
+Run these steps in order before every `git push`:
+
+### 1. Run unittest discovery
+```bash
+python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+### 2. Run pytest
+```bash
+python -m pytest tests/ -v --tb=short
+```
+
+All tests must pass in both runners. Do not push with failing tests.
+
+### 2. Run pre-commit hooks
+```bash
+pre-commit run --all-files
+```
+Fix any reported issues before proceeding.
+
+### 3. Push only if both pass
+```bash
+git push origin <branch>
+```
+
+---
+
+## pre-commit Setup
+
+If `.pre-commit-config.yaml` does not exist yet, create it:
+
+```yaml
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff          # lint
+      - id: ruff-format   # format
+
+  - repo: local
+    hooks:
+      - id: unittest
+        name: unittest
+        entry: python -m unittest discover -s tests -p "test_*.py"
+        language: system
+        pass_filenames: false
+      - id: pytest
+        name: pytest
+        entry: python -m pytest tests/ --tb=short
+        language: system
+        pass_filenames: false
+```
+
+Install hooks once after creating the file:
+```bash
+pip install pre-commit
+pre-commit install   # registers as a git hook going forward
+```
+
+---
+
+## DO
+- Run `pytest` and `pre-commit` locally before every push
+- Fix all lint and format issues — never skip with `--no-verify`
+- Ensure new code has corresponding tests before pushing
+
+## DON'T
+- Don't use `git push --no-verify` to bypass hooks
+- Don't push directly to `main` or `develop` without passing tests
+- Don't ignore `pytest` warnings — treat them as errors in CI

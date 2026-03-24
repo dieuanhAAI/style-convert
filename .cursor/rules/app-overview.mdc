@@ -1,0 +1,119 @@
+---
+description: Core project context for style-convert — stack, architecture, domain overview
+alwaysApply: true
+---
+
+# style-convert
+
+## Project Overview
+- **Purpose:** Apply visual styles from a reference image onto a target image using an LLM, then deliver the result as an Adobe Illustrator (`.ai`) file
+- **Type:** REST API
+- **Domain:** AI-powered image transformation and file conversion
+- **Stack:** FastAPI, Python, Claude API (vision), Convertio API
+
+## Core Features
+- **Style Transfer** — accepts a style reference image, a target image, and a prompt; returns a styled PNG via LLM
+- **Format Conversion** — converts the LLM-generated PNG to `.ai` format via Convertio API
+- **Single Endpoint Flow** — the full pipeline (style → convert) is triggered from one request and returns a downloadable `.ai` file
+
+## Pipeline Flow
+
+```
+Client
+  │
+  ▼
+POST /convert
+  │  ├── style_reference (image)
+  ├── target_image (image)
+  └── prompt (string)
+        │
+        ▼
+  [ Step 1: LLM — Style Transfer ]
+  │  Input : style_reference + target_image + prompt
+  │  Model : Claude (vision)
+  │  Output: styled PNG (bytes)
+        │
+        ▼
+  [ Step 2: Convertio API — Format Conversion ]
+  │  Input : styled PNG (bytes)
+  │  Output: .ai file (bytes)
+        │
+        ▼
+Client receives .ai file download
+```
+
+## Domain Model
+
+```
+ConvertRequest
+├── style_reference   # uploaded image — style source (jpg/png)
+├── target_image      # uploaded image — image to be modified (jpg/png)
+├── prompt            # string — instructions to guide the style transfer
+
+ConvertResponse
+├── file              # .ai file as a downloadable binary response
+├── filename          # generated output filename (e.g. output_<uuid>.ai)
+```
+
+## Project Structure
+
+```
+src/
+├── main.py                  # FastAPI app entry point, router registration
+├── routers/
+│   └── convert.py           # POST /convert endpoint
+├── services/
+│   ├── llm_service.py       # Claude API call — style transfer, returns PNG bytes
+│   └── convertio_service.py # Convertio API call — PNG to .ai conversion
+├── schemas/
+│   └── convert.py           # Pydantic request/response models
+├── core/
+│   ├── config.py            # Settings (API keys, timeouts) via pydantic-settings
+│   └── exceptions.py        # Custom HTTP exception handlers
+└── utils/
+    └── image.py             # Image encoding helpers (base64, mime type detection)
+```
+
+## Module Responsibilities
+
+| File | Responsibility |
+|---|---|
+| `routers/convert.py` | Receive upload, call services in order, return file response |
+| `services/llm_service.py` | Build multimodal prompt, call Claude API, return PNG bytes |
+| `services/convertio_service.py` | Upload PNG to Convertio, poll for result, return `.ai` bytes |
+| `schemas/convert.py` | Validate prompt input; define response shape |
+| `core/config.py` | Load `ANTHROPIC_API_KEY`, `CONVERTIO_API_KEY` from environment |
+| `utils/image.py` | Encode images to base64 for LLM payload construction |
+
+## API
+
+### `POST /convert`
+
+**Request:** `multipart/form-data`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `style_reference` | file | ✅ | Image whose style will be applied |
+| `target_image` | file | ✅ | Image to be transformed |
+| `prompt` | string | ✅ | Instructions to guide the transformation |
+
+**Response:** `application/octet-stream`
+- Binary `.ai` file download
+- Header: `Content-Disposition: attachment; filename="output_<uuid>.ai"`
+
+**Errors:**
+
+| Status | Reason |
+|---|---|
+| `400` | Invalid file type, missing field, or malformed prompt |
+| `422` | Pydantic validation failure |
+| `502` | LLM API or Convertio API error |
+| `504` | Convertio conversion timed out |
+
+## Key Conventions
+- Images are never written to disk — all processing is in-memory as bytes
+- API keys are loaded exclusively from environment variables via `core/config.py`
+- The router is thin — all pipeline logic lives in the services
+- `llm_service` and `convertio_service` are stateless and independently testable
+- Convertio polling has a configurable timeout with a `504` fallback
+- File type validation (jpg/png only) happens at the router level before any service is called

@@ -1,0 +1,61 @@
+---
+description: Steps and conventions for initializing a GitHub repository for a new project
+alwaysApply: false
+---
+
+# GitHub Repo Initialization
+
+## Steps
+
+1. Initialize git and make the first commit:
+```bash
+git init
+git add .
+git commit -m "chore: initial project scaffold"
+```
+
+2. Create the remote repo and push:
+```bash
+gh repo create <repo-name> --private --source=. --remote=origin --push
+```
+
+3. Set the default branch to `main`:
+```bash
+git branch -M main
+git push -u origin main
+```
+
+4. Create a `develop` branch for ongoing work:
+```bash
+git checkout -b develop
+git push -u origin develop
+```
+
+## Branch Conventions
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Production-ready code only |
+| `develop` | Integration branch for features |
+| `feat/<name>` | New features |
+| `fix/<name>` | Bug fixes |
+| `chore/<name>` | Tooling, config, dependencies |
+
+## Commit Message Format
+
+Follow Conventional Commits:
+```
+<type>: <short description>
+
+types: feat, fix, chore, docs, refactor, test, style
+```
+
+## DO
+- Always create `.gitignore` before the first commit
+- Use `--private` unless the repo is intentionally public
+- Push both `main` and `develop` on init
+
+## DON'T
+- Don't commit `.env` files — add to `.gitignore` first
+- Don't push directly to `main` after the initial scaffold
+- Don't use generic names like `my-project` — match the app name exactly

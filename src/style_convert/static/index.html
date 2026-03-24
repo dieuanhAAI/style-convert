@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>style-convert</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,600;1,400&family=Syne:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <h1>Style → Illustrator</h1>
+        <p class="lede">
+          Upload a style reference and a target image, describe the look you want, and download an
+          <code style="font-size: 0.9em">.ai</code> file.
+        </p>
+      </header>
+
+      <main class="card">
+        <form id="convert-form" action="/convert" method="post" enctype="multipart/form-data">
+          <div class="field">
+            <label for="style_reference">
+              Style reference
+              <span class="hint"> — JPEG or PNG whose look you want to borrow</span>
+            </label>
+            <input
+              id="style_reference"
+              name="style_reference"
+              type="file"
+              accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="target_image">
+              Target image
+              <span class="hint"> — JPEG or PNG to transform</span>
+            </label>
+            <input
+              id="target_image"
+              name="target_image"
+              type="file"
+              accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <span class="label-text" id="provider-legend">Vision provider</span>
+            <p class="hint field-hint">
+              Who reads your images to write the image prompt. PNG output still uses OpenAI Images.
+            </p>
+            <div class="segmented" role="radiogroup" aria-labelledby="provider-legend">
+              <label class="segment">
+                <input type="radio" name="llm_provider" value="openai" checked />
+                <span>OpenAI</span>
+              </label>
+              <label class="segment">
+                <input type="radio" name="llm_provider" value="anthropic" />
+                <span>Anthropic</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="prompt">Prompt</label>
+            <textarea
+              id="prompt"
+              name="prompt"
+              placeholder="e.g. Match the line weight and flat colors of the style reference; keep the subject and framing from the target."
+              required
+              maxlength="8000"
+            ></textarea>
+          </div>
+
+          <div class="actions">
+            <button type="submit" id="submit-btn">Convert &amp; download .ai</button>
+          </div>
+        </form>
+
+        <p id="status" class="status" hidden aria-live="polite"></p>
+      </main>
+
+      <footer>
+        Same flow as <code>POST /convert</code> — processing stays on the server; your browser only
+        sends the form and saves the response.
+      </footer>
+    </div>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
