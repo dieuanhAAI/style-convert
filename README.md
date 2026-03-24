@@ -121,6 +121,40 @@ src/
 pip install -e ".[dev]"
 ```
 
+## Git and GitHub
+
+This repo follows branch conventions documented in `.cursor/rules/git-repo-init.mdc`:
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Production-ready code |
+| `develop` | Integration branch for ongoing work |
+
+`.env` and `.venv/` are gitignored.
+
+**Create the remote and push** (after [GitHub CLI](https://cli.github.com/) login: `gh auth login`):
+
+```bash
+gh repo create style-convert --private --source=. --remote=origin --push
+git push -u origin main
+git push -u origin develop
+```
+
+If `main` was already pushed by `gh repo create --push`, only push `develop` if it is not on the remote yet:
+
+```bash
+git checkout develop
+git push -u origin develop
+```
+
+Without `gh`, create an empty private repo named `style-convert` on GitHub, then:
+
+```bash
+git remote add origin https://github.com/YOUR_USER/style-convert.git
+git push -u origin main
+git push -u origin develop
+```
+
 ---
 
 Convertio is a third-party service; see their [API documentation](https://developers.convertio.co/api/docs) for quotas and behavior.
